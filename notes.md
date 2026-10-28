@@ -17,6 +17,12 @@ std lib usually prints a message and exits on eror, we need to define it ourselv
 #[no_mangle] 
 rust usually scrambles names internally, this keeps names like _start the same so bootloader can find it.
 
+[build] target
+target computer that rust compiles for, otherwise it defaults to the regular computer OS (in my case MacOS)
+
+runner 
+says how to start the program since a kernal cant be run directly, so bootimage runner wraps it with the booatloader into a disk image, and QEMU is launcehd with it.
+
 fn _start() -> !
 - bootloader goes here when CPU is ready. 
 - the ! is the never type reserved for functinos that done finish.
