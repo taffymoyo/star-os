@@ -27,6 +27,16 @@ fn _start() -> !
 - bootloader goes here when CPU is ready. 
 - the ! is the never type reserved for functinos that done finish.
 
+fn write_cell
+
+- uses VGA text mode, a computer display standard of an 80 row and 25 column grid
+- When the PC boots, the firmware sets the video hardware to text mode 3 automatically
+- In VGA text mode, cells are 2 bytes, first byte for the character and the second byte is for the text colour.
+
+- unsafe keyword tells rust to perform an action that the compiler would usually complain. 
+
+Usually rust prevents your program from touching memory it shouldn't touch and knows where each variable lives in memory. When we declare 0xb8000 the compiler doesnt know, 0xb8000 is a known standard address for bootups so in this particular context its fine.
+
 ### Operating System
 
 - manages device hardware and software resources
