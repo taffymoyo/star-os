@@ -9,6 +9,19 @@ fn panic(_info: &PanicInfo) -> ! {
 }
 
 static HELLO: &[u8] = b"Hello from star-os!";
+
+fn write_cell(row: usize, col: usize, byte: u8) {
+
+    // 0xb8000 = where the VGA colour text-mode buffer is mapped in memory (fixed by PC hardware)
+    // as converts a value from one type to another
+    let vga_buffer = 0xb8000 as *mut u8; // *mut u8 = raw pointer type, vga_buffer holds 0xb8000 as an address, at this address lives a u8
+    let offset = (row * 80 + col) * 2;
+    unsafe {
+        vga_buffer.add(offset).write_volatile(byte);
+        vga_buffer.add(offset + 1).write_volatile(0xb);
+    }
+}
+
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     // The screen's text buffer lives at this memory address.
