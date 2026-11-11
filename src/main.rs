@@ -8,7 +8,7 @@ fn panic(_info: &PanicInfo) -> ! {
     loop {}
 }
 
-static HELLO: &[u8] = b"Hello from star-os!";
+static HELLO: &[u8] = b"Welcome to star-os!";
 
 fn write_cell(row: usize, col: usize, byte: u8) {
 
@@ -22,11 +22,16 @@ fn write_cell(row: usize, col: usize, byte: u8) {
     }
 }
 
+fn write_string(row: usize, col: usize, s: &[u8]) {
+    for (i, &byte) in s.iter().enumerate() { // iter returns references (the address of each char in s) so the for loop expects these references and unpacks them
+        write_cell(row, i + col, byte); // byte holds the 
+    }
+}
+
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    // The screen's text buffer lives at this memory address.
-    for (i, &byte) in HELLO.iter().enumerate() {
-        write_cell(2, i + 30, byte);
-    }
+
+    write_string(2, 31, HELLO);
+
     loop {}
 }
