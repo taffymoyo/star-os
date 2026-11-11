@@ -10,7 +10,7 @@ fn panic(_info: &PanicInfo) -> ! {
 
 static HELLO: &[u8] = b"Welcome to star-os!";
 
-fn write_cell(row: usize, col: usize, byte: u8) {
+fn write_cell(row: usize, col: usize, byte: u8, colour: u8) {
 
     // 0xb8000 = where the VGA colour text-mode buffer is mapped in memory (fixed by PC hardware)
     // as converts a value from one type to another
@@ -18,27 +18,27 @@ fn write_cell(row: usize, col: usize, byte: u8) {
     let offset = (row * 80 + col) * 2; // writing the grid space
     unsafe { // tells the compiler to perform an unsafe action and not to complain
         vga_buffer.add(offset).write_volatile(byte); // makes a new pointer 0xb8000 + offset (add is an unsafe operation, moving a pointer is undefined behaviour)
-        vga_buffer.add(offset + 1).write_volatile(0xe); // one byte after the char byte (VGA specific)  is the colour byte, 0xb is light cyan 
+        vga_buffer.add(offset + 1).write_volatile(colour); // one byte after the char byte (VGA specific)  is the colour byte, 0xb is light cyan 
     }
 }
 
 fn write_string(row: usize, col: usize, s: &[u8]) {
     for (i, &byte) in s.iter().enumerate() { // iter returns references (the address of each char in s) so the for loop expects these references and unpacks them
-        write_cell(row, i + col, byte); // byte holds the 
+        write_cell(row, i + col, byte, 0xe); // byte holds the 
     }
 }
 
 fn clear_screen() {
     for row in 0..25 {
         for col in 0..80 {
-            write_cell(row, col,b' '); // rewrites all text with spaces which show as black
+            write_cell(row, col,b' ', 0x00); // rewrites all text with spaces which show as black
         }
     }
 }
 
 fn delay() { // debugging tool, acts as my async for now
     for _ in 0..1_000_000 {
-        core::hint::spin_loop();
+        core::hint::spin_loop(); // tells the cpu to do useless instructions to delay time
     }
 }
 
