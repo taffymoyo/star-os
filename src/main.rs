@@ -28,10 +28,27 @@ fn write_string(row: usize, col: usize, s: &[u8]) {
     }
 }
 
+fn clear_screen() {
+    for row in 0..25 {
+        for col in 0..80 {
+            write_cell(row, col,b' '); // rewrites all text with spaces which show as black
+        }
+    }
+}
+
+fn delay() { // debugging tool, acts as my async for now
+    for _ in 0..1_000_000 {
+        core::hint::spin_loop();
+    }
+}
+
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
 
     write_string(2, 31, HELLO);
-
+    delay();
+    clear_screen();
+    delay();
+    write_string(5, 31, b"Back again!");
     loop {}
 }
