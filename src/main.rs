@@ -9,6 +9,8 @@ fn panic(_info: &PanicInfo) -> ! {
 }
 
 static HELLO: &[u8] = b"Welcome to star-os!";
+static mut ROW: usize = 0;
+static mut COL: usize = 0;
 
 fn write_cell(row: usize, col: usize, byte: u8, colour: u8) {
 
@@ -22,9 +24,26 @@ fn write_cell(row: usize, col: usize, byte: u8, colour: u8) {
     }
 }
 
-fn write_string(row: usize, col: usize, s: &[u8]) {
-    for (i, &byte) in s.iter().enumerate() { // iter returns references (the address of each char in s) so the for loop expects these references and unpacks them
-        write_cell(row, i + col, byte, 0xe); // byte holds the 
+/// function for writing characters at the cursor position
+fn write_byte(byte: u8, colour: u8) { 
+    unsafe { // needs unsafe because ROW and COL are global variables and can be modified by anything
+        if byte == b'\n' {
+            COL = 0;
+            ROW += 1;
+        } else {
+            if COL >= 80 {
+                COL = 0;
+                ROW += 1;
+            }
+            write_cell(ROW, COL, byte, colour);
+            COL += 1; // write the next char at the next position
+        }
+    }
+}
+
+fn write_string(s: &[u8], colour: u8) {
+    for &byte in s.iter() { // iter returns references (the address of each char in s) so the for loop expects these references and unpacks them
+        write_byte(byte, colour); // byte holds the 
     }
 }
 
@@ -45,10 +64,14 @@ fn delay() { // debugging tool, acts as my async for now
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
 
-    write_string(2, 31, HELLO);
+    write_string(HELLO, 0xb);
     delay();
     clear_screen();
     delay();
-    write_string(5, 31, b"Back again!");
+    write_string(b"Back again!", 0xc);
+    delay();
+    write_string(b"Back again!", 0xd);
+    delay();
+    write_string(b"Back again!", 0xe);
     loop {}
 }
