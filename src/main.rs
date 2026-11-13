@@ -24,6 +24,18 @@ fn write_cell(row: usize, col: usize, byte: u8, colour: u8) {
     }
 }
 
+fn read_cell(row: usize, col: usize) -> (u8, u8) {
+
+    let vga_buffer = 0xb8000 as *mut u8; // *mut u8 = raw pointer type, vga_buffer holds 0xb8000 as an address, at this address lives a u8
+    let offset = (row * 80 + col) * 2; 
+    unsafe { 
+        (
+            vga_buffer.add(offset).read_volatile(), // makes a new pointer 0xb8000 + offset (add is an unsafe operation, moving a pointer is undefined behaviour), fetches the content of the character byte
+            vga_buffer.add(offset + 1).read_volatile() // one byte after the char byte (VGA specific)  is the colour byte, doesn't write this time, fetches the contents of the colour byte
+        ) // note we dont put a ; at the end of this tuple, because we want to return it.
+    }
+}
+
 /// function for writing characters at the cursor position
 fn write_byte(byte: u8, colour: u8) { 
     unsafe { // needs unsafe because ROW and COL are global variables and can be modified by anything
@@ -64,14 +76,12 @@ fn delay() { // debugging tool, acts as my async for now
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
 
-    write_string(HELLO, 0xb);
-    delay();
-    clear_screen();
-    delay();
-    write_string(b"Back again!", 0xc);
-    delay();
-    write_string(b"Back again!", 0xd);
-    delay();
-    write_string(b"Back again!", 0xe);
+    write_cell(5, 5, b'A', 0x0e);
+    let (ch, colour) = read_cell(5, 5);
+    if ch == b'A' && colour == 0x0e {
+        write_string(b"read_cell works", 0x0a);
+    } else {
+        write_string(b"read_cell BROKEN", 0x04);
+    }
     loop {}
-}
+}   
