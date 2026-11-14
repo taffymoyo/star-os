@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use core::panic::PanicInfo;
+use core::{panic::PanicInfo, ptr::read};
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
@@ -36,16 +36,35 @@ fn read_cell(row: usize, col: usize) -> (u8, u8) {
     }
 }
 
+fn scroll() {
+    for row in 1..25 {
+        for col in 0..80 {
+            let (ch, colour) = read_cell(row, col);
+            write_cell(row - 1, col, ch, colour);
+        }
+    }
+    for col in 0..80 {
+        write_cell(24, col, b' ', 0x07);
+    }
+    unsafe {ROW = 24;}
+}
+
 /// function for writing characters at the cursor position
 fn write_byte(byte: u8, colour: u8) { 
     unsafe { // needs unsafe because ROW and COL are global variables and can be modified by anything
         if byte == b'\n' {
             COL = 0;
             ROW += 1;
+            if ROW == 25 {
+                scroll();
+            }
         } else {
             if COL >= 80 {
                 COL = 0;
                 ROW += 1;
+                if ROW == 25 {
+                    scroll();
+                }
             }
             write_cell(ROW, COL, byte, colour);
             COL += 1; // write the next char at the next position
@@ -75,13 +94,13 @@ fn delay() { // debugging tool, acts as my async for now
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-
-    write_cell(5, 5, b'A', 0x0e);
-    let (ch, colour) = read_cell(5, 5);
-    if ch == b'A' && colour == 0x0e {
-        write_string(b"read_cell works", 0x0a);
-    } else {
-        write_string(b"read_cell BROKEN", 0x04);
-    }
-    loop {}
+clear_screen();
+write_string(b"FIRST LINE\n", 0x0c);        // red, row 0
+for _ in 0..23 {
+    write_string(b"filler\n", 0x0e);        // rows 1..23, cursor ends on row 24
+}
+for _ in 0..100 {
+    write_byte(b'a', 0x0a);                 // 100 green a's, no newline
+}
+loop {}
 }   
