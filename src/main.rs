@@ -3,14 +3,52 @@
 
 use core::{panic::PanicInfo, ptr::read};
 
+struct Writer {
+    row: usize,
+    col: usize,
+    colour: u8,
+}
+
+/// Writer struct responsible for writing characters
+impl Writer { 
+
+    /// Writes a new line
+    /// If line is greater than 24 (out of VGA buffer), move existing lines up by one row and add a new blank row at line 24
+    fn new_line(&mut self) {
+        self.col = 0;
+        self.row += 1;
+        if self.row >= 25 {
+            scroll();
+            self.row = 24;
+        }
+    }
+
+    /// Writes one byte at the cursor then advances the cursor
+    fn write_byte(&mut self, byte: u8) { 
+        if byte == b'\n' {
+            self.new_line();
+        } else {
+            if self.col >= 80 {
+                self.new_line();
+            }
+            write_cell(self.row, self.col, byte, self.colour);
+            self.col += 1; // write the next char at the next position
+        }
+    }
+
+    /// Writes a full string by repeatedly calling write byte method
+    fn write_string(&mut self, s: &[u8]) {
+        for &byte in s.iter() { // iter() returns addresses, &byte here follows the address to the value
+            self.write_byte(byte); // byte holds the 
+        }
+    }
+}
+
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
     loop {}
 }
 
-static HELLO: &[u8] = b"Welcome to star-os!";
-static mut ROW: usize = 0;
-static mut COL: usize = 0;
 
 fn write_cell(row: usize, col: usize, byte: u8, colour: u8) {
 
@@ -46,36 +84,6 @@ fn scroll() {
     for col in 0..80 {
         write_cell(24, col, b' ', 0x07);
     }
-    unsafe {ROW = 24;}
-}
-
-/// function for writing characters at the cursor position
-fn write_byte(byte: u8, colour: u8) { 
-    unsafe { // needs unsafe because ROW and COL are global variables and can be modified by anything
-        if byte == b'\n' {
-            COL = 0;
-            ROW += 1;
-            if ROW == 25 {
-                scroll();
-            }
-        } else {
-            if COL >= 80 {
-                COL = 0;
-                ROW += 1;
-                if ROW == 25 {
-                    scroll();
-                }
-            }
-            write_cell(ROW, COL, byte, colour);
-            COL += 1; // write the next char at the next position
-        }
-    }
-}
-
-fn write_string(s: &[u8], colour: u8) {
-    for &byte in s.iter() { // iter returns references (the address of each char in s) so the for loop expects these references and unpacks them
-        write_byte(byte, colour); // byte holds the 
-    }
 }
 
 fn clear_screen() {
@@ -94,13 +102,12 @@ fn delay() { // debugging tool, acts as my async for now
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-clear_screen();
-write_string(b"FIRST LINE\n", 0x0c);        // red, row 0
-for _ in 0..23 {
-    write_string(b"filler\n", 0x0e);        // rows 1..23, cursor ends on row 24
+    clear_screen();
+    let mut w = Writer { row: 0, col: 0, colour: 0x0a };
+    w.write_string(b"FIRST LINE\n");
+    for i in 0..23u8 {
+        w.write_byte(b'A' + i);
+        w.write_byte(b'\n');
+    }
+    loop {}
 }
-for _ in 0..100 {
-    write_byte(b'a', 0x0a);                 // 100 green a's, no newline
-}
-loop {}
-}   
