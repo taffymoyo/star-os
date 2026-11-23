@@ -2,6 +2,8 @@
 #![no_main]
 
 use core::{panic::PanicInfo, ptr::read};
+use core::fmt;
+use core::fmt::Write;
 
 struct Writer {
     row: usize,
@@ -41,6 +43,13 @@ impl Writer {
         for &byte in s.iter() { // iter() returns addresses, &byte here follows the address to the value
             self.write_byte(byte); // byte holds the 
         }
+    }
+}
+
+impl fmt::Write for Writer {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        self.write_string(s.as_bytes()); // write_string takes bytes, so s must be converted
+        Ok(()) // return type expects an fmt::Result, which is an enum
     }
 }
 
@@ -102,12 +111,10 @@ fn delay() { // debugging tool, acts as my async for now
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
+
     clear_screen();
     let mut w = Writer { row: 0, col: 0, colour: 0x0a };
-    w.write_string(b"FIRST LINE\n");
-    for i in 0..23u8 {
-        w.write_byte(b'A' + i);
-        w.write_byte(b'\n');
-    }
+    write!(w, "1 + 1 = {}\n", 1 + 1).unwrap();
+    write!(w, "hex of 255 is {:x}\n", 255).unwrap();
     loop {}
 }
