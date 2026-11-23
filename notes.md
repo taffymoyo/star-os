@@ -68,3 +68,22 @@ They both must agree on where arguments go, how to return arguments and other sm
 - Loaded after firmware (BIOS) has alerady run.
 - Inherits an old CPU in 16 bit real mode.
 - Converts cpu from 16-32-64 bit mode, sets up stack, copy the kernal from disk to memory etc... its final act is to jump to the start function.
+
+### Format Strings
+
+- A string that contains placeholders where rust can insert values.
+- Placeholders are put in curly braces {}.
+- Different ways to specify placeholders, {}, {:?} etc...
+
+### Crate
+- A crate is one library or program made of rust source files that compile together.
+- star-os is a crate itself, core is a crate, bootloader etc...
+
+### Function vs Macro
+- Function is called at runtime with value
+- Returns a value, does not return code
+
+- Macro is code that writes code, runs at compile time, have ! such as println!()
+- Macros can take a variable number of arguments while function arguments are fixed.
+- Checked at compile time, e.g. a wrong number of placeholders is caught at compile time
+- Output of a macro is always SOURCE CODE, 

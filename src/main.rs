@@ -1,9 +1,13 @@
 #![no_std]
 #![no_main]
 
+use core::arch::global_asm;
 use core::{panic::PanicInfo, ptr::read};
 use core::fmt;
 use core::fmt::Write;
+use spin::Mutex;
+
+
 
 struct Writer {
     row: usize,
@@ -109,12 +113,14 @@ fn delay() { // debugging tool, acts as my async for now
     }
 }
 
+static WRITER: Mutex<Writer> = Mutex::new(Writer {row: 0, col: 0, colour: 0x0a}); 
+// add global writer var that exists for whole program
+// Mutex makes sure only one thread can edit the global variable at a time by forcing future threads to wait to get a lock
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
 
     clear_screen();
-    let mut w = Writer { row: 0, col: 0, colour: 0x0a };
-    write!(w, "1 + 1 = {}\n", 1 + 1).unwrap();
-    write!(w, "hex of 255 is {:x}\n", 255).unwrap();
+    write!(WRITER.lock(), "hello {}\n", 42).unwrap();
+    write!(WRITER.lock(), "second line\n").unwrap();
     loop {}
 }
