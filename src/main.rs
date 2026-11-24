@@ -57,12 +57,6 @@ impl fmt::Write for Writer {
     }
 }
 
-#[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
-    loop {}
-}
-
-
 fn write_cell(row: usize, col: usize, byte: u8, colour: u8) {
 
     // 0xb8000 = where the VGA colour text-mode buffer is mapped in memory (fixed by PC hardware)
@@ -113,6 +107,25 @@ fn delay() { // debugging tool, acts as my async for now
     }
 }
 
+macro_rules! print {
+    ($($arg:tt)*) => (_print(format_args!($($arg)*)));
+}
+
+macro_rules! println {
+    () => (print!("\n"));
+    ($($arg:tt)*) => (print!("{}\n", format_args!($($arg)*)));
+}
+
+pub fn _print(args: fmt::Arguments) {
+    WRITER.lock().write_fmt(args).unwrap();
+}
+
+#[panic_handler]
+fn panic(info: &PanicInfo) -> ! {
+    println!("{}", info);
+    loop {}
+}
+
 static WRITER: Mutex<Writer> = Mutex::new(Writer {row: 0, col: 0, colour: 0x0a}); 
 // add global writer var that exists for whole program
 // Mutex makes sure only one thread can edit the global variable at a time by forcing future threads to wait to get a lock
@@ -120,7 +133,12 @@ static WRITER: Mutex<Writer> = Mutex::new(Writer {row: 0, col: 0, colour: 0x0a})
 pub extern "C" fn _start() -> ! {
 
     clear_screen();
-    write!(WRITER.lock(), "hello {}\n", 42).unwrap();
-    write!(WRITER.lock(), "second line\n").unwrap();
+    println!("Hello from star-os!");
+    println!("1 + 1 = {}", 1 + 1);
+    println!("hex of 255 is {:x}", 255);
+    print!("no newline, ");
+    print!("same line\n");
+    println!();
+    println!("after a blank line");
     loop {}
 }
